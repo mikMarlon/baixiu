@@ -1,6 +1,53 @@
+<!-- 
+
+  1.要把数据显示到界面上
+        1.1 先确定一个接口
+        1.2 完成这个接口 sql语句极其简单，就直接找到id为10的那一条数据，只要查value字段，options表
+        1.3 查到的结果是一个二维数组，记得取下标和value，取到的结果就直接是JSON字符串，直接返回就行了
+        1.4 界面打开发起一个请求，响应完成里面
+              把响应体展示到界面上（用模板）
+              准备一个全局变量，把这个数组保存起来（为了做新增）
+
+   2.给图片加异步上传和预览
+        2.1 准备一个异步上传并返回路径的接口
+        2.2 给上传元素加一个change事件，事件里发起异步请求，请求刚刚这个接口（要传文件必须要用formdata）
+        2.3 发请求，响应完成里拿到路径，给img并展示（记得给img加id）
+
+    
+   3.给添加按钮加点击事件
+        3.1 先记得给按钮加id 
+        3.2 阻止事件默认实现
+
+ -->
+
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
+  <!-- 最好页面一打开发请求，判断是否登录 -->
+  <script>
+
+    //发一个请求
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('get', 'api/checkLogin.php', false);
+
+    //同步任务的话，记得先把事件监听的代码放在send前面
+    xhr.onload = function () {
+
+      //不等于代表没有登录
+      if (xhr.responseText != "loginOK") {
+        //如果没有登录，打回登录页面
+        location = "login.html";
+        return;
+      }
+
+    }
+
+    //发送请求
+    xhr.send();
+
+  </script>
   <meta charset="utf-8">
   <title>Slides &laquo; Admin</title>
   <link rel="stylesheet" href="../assets/vendors/bootstrap/css/bootstrap.css">
@@ -9,6 +56,7 @@
   <link rel="stylesheet" href="../assets/css/admin.css">
   <script src="../assets/vendors/nprogress/nprogress.js"></script>
 </head>
+
 <body>
   <script>NProgress.start()</script>
 
@@ -16,8 +64,14 @@
     <nav class="navbar">
       <button class="btn btn-default navbar-btn fa fa-bars"></button>
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-        <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+        <li>
+          <a href="profile.html">
+            <i class="fa fa-user"></i>个人中心</a>
+        </li>
+        <li>
+          <a href="api/logout.php">
+            <i class="fa fa-sign-out"></i>退出</a>
+        </li>
       </ul>
     </nav>
     <div class="container-fluid">
@@ -35,7 +89,7 @@
             <div class="form-group">
               <label for="image">图片</label>
               <!-- show when image chose -->
-              <img class="help-block thumbnail" style="display: none">
+              <img id="prevImage" class="help-block thumbnail" style="display: none">
               <input id="image" class="form-control" name="image" type="file">
             </div>
             <div class="form-group">
@@ -47,19 +101,21 @@
               <input id="link" class="form-control" name="link" type="text" placeholder="链接">
             </div>
             <div class="form-group">
-              <button class="btn btn-primary" type="submit">添加</button>
+              <button id="add" class="btn btn-primary" type="submit">添加</button>
             </div>
           </form>
         </div>
         <div class="col-md-8">
           <div class="page-action">
             <!-- show when multiple checked -->
-            <a class="btn btn-danger btn-sm" href="javascript:;" style="display: none">批量删除</a>
+            <a class="btn btn-danger btn-sm" href="javascript:batchDelete();" style="display: none">批量删除</a>
           </div>
           <table class="table table-striped table-bordered table-hover">
             <thead>
               <tr>
-                <th class="text-center" width="40"><input type="checkbox"></th>
+                <th class="text-center" width="40">
+                  <input type="checkbox">
+                </th>
                 <th class="text-center">图片</th>
                 <th>文本</th>
                 <th>链接</th>
@@ -68,8 +124,12 @@
             </thead>
             <tbody>
               <tr>
-                <td class="text-center"><input type="checkbox"></td>
-                <td class="text-center"><img class="slide" src="../uploads/slide_1.jpg"></td>
+                <td class="text-center">
+                  <input type="checkbox">
+                </td>
+                <td class="text-center">
+                  <img class="slide" src="../uploads/slide_1.jpg">
+                </td>
                 <td>XIU功能演示</td>
                 <td>#</td>
                 <td class="text-center">
@@ -77,8 +137,12 @@
                 </td>
               </tr>
               <tr>
-                <td class="text-center"><input type="checkbox"></td>
-                <td class="text-center"><img class="slide" src="../uploads/slide_2.jpg"></td>
+                <td class="text-center">
+                  <input type="checkbox">
+                </td>
+                <td class="text-center">
+                  <img class="slide" src="../uploads/slide_2.jpg">
+                </td>
                 <td>XIU功能演示</td>
                 <td>#</td>
                 <td class="text-center">
@@ -99,32 +163,49 @@
     </div>
     <ul class="nav">
       <li>
-        <a href="index.html"><i class="fa fa-dashboard"></i>仪表盘</a>
+        <a href="index.html">
+          <i class="fa fa-dashboard"></i>仪表盘</a>
       </li>
       <li>
         <a href="#menu-posts" class="collapsed" data-toggle="collapse">
-          <i class="fa fa-thumb-tack"></i>文章<i class="fa fa-angle-right"></i>
+          <i class="fa fa-thumb-tack"></i>文章
+          <i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-posts" class="collapse">
-          <li><a href="posts.html">所有文章</a></li>
-          <li><a href="post-add.html">写文章</a></li>
-          <li><a href="categories.html">分类目录</a></li>
+          <li>
+            <a href="posts.html">所有文章</a>
+          </li>
+          <li>
+            <a href="post-add.html">写文章</a>
+          </li>
+          <li>
+            <a href="categories.html">分类目录</a>
+          </li>
         </ul>
       </li>
       <li>
-        <a href="comments.html"><i class="fa fa-comments"></i>评论</a>
+        <a href="comments.html">
+          <i class="fa fa-comments"></i>评论</a>
       </li>
       <li>
-        <a href="users.html"><i class="fa fa-users"></i>用户</a>
+        <a href="users.html">
+          <i class="fa fa-users"></i>用户</a>
       </li>
       <li class="active">
         <a href="#menu-settings" data-toggle="collapse">
-          <i class="fa fa-cogs"></i>设置<i class="fa fa-angle-right"></i>
+          <i class="fa fa-cogs"></i>设置
+          <i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-settings" class="collapse in">
-          <li><a href="nav-menus.html">导航菜单</a></li>
-          <li class="active"><a href="slides.html">图片轮播</a></li>
-          <li><a href="settings.html">网站设置</a></li>
+          <li>
+            <a href="nav-menus.html">导航菜单</a>
+          </li>
+          <li class="active">
+            <a href="slides.html">图片轮播</a>
+          </li>
+          <li>
+            <a href="settings.html">网站设置</a>
+          </li>
         </ul>
       </li>
     </ul>
@@ -134,4 +215,239 @@
   <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
   <script>NProgress.done()</script>
 </body>
+
 </html>
+
+<!-- 导入模板 -->
+<script src="/assets/vendors/template-web.js"></script>
+
+<script type="text/html" id="tpl">
+
+{{ each list value key }}
+  <tr>
+      <td class="text-center"><input value="{{ key }}" type="checkbox" onclick="doCheck();"></td>
+      <td class="text-center"><img class="slide" src="{{ value.image }}"></td>
+      <td>{{ value.text }}</td>
+      <td>{{ value.link }}</td>
+      <td class="text-center">
+        <a href="javascript:deleteTr( {{ key }} );" class="btn btn-danger btn-xs">删除</a>
+      </td>
+    </tr>
+{{ /each }}
+</script>
+
+<script>
+
+  //声明一个全局变量保存轮播图数组
+  var sliderList;
+
+  //发起一个请求，获取轮播图数据
+  $.get({
+
+    url: "api/getSliders.php",
+    dataType: "json",
+    success: function (obj) {
+
+      //记录轮播图数组
+      sliderList = obj;
+
+      console.log(obj);
+
+
+      var html = template('tpl', { list: obj });
+
+      $('tbody').html(html);
+    }
+  });
+
+
+  //2. 给上传元素加change事件
+  $('#image').change(function () {
+
+
+    //要异步上传图片，要用formdata
+    // var fm = new FormData(document.querySelector('form'));
+
+    //因为这样的话传递数据的时候会少传一点
+    var fm = new FormData();
+    fm.append('image', this.files[0]);
+
+    //发一个异步请求，传图片，响应体应该是一个路径
+    $.post({
+
+      url: "api/uploadImage.php",
+      data: fm,
+      contentType: false,
+      processData: false,
+      success: function (obj) {
+
+        $('#prevImage').attr('src', obj).show();
+
+      }
+    });
+
+  });
+
+
+  //给添加加点击事件
+  $('#add').click(function (e) {
+
+    //阻止事件默认行为
+    e = e || window.event;
+    e.preventDefault();
+
+    //获取页面数据
+    // 获取图片路径
+    // 获取text
+    // 获取link
+    //转化成对象
+    var obj = {
+      image: $('#prevImage').attr('src'),
+      text: $('#text').val(),
+      link: $('#link').val()
+    };
+
+
+    //添加到数组
+    sliderList.push(obj);
+
+    //把数组转成JSON字符串
+    var jsonStr = JSON.stringify(sliderList);
+
+    //为了存到数据库，就要访问接口
+    $.post({
+
+      url: "api/updateSliders.php",
+      data: { list: jsonStr },
+      success: function (obj) {
+
+        if (obj == 'ok') {
+
+          alert('添加成功！');
+          //整个网页
+          location.reload();
+
+        } else {
+
+          alert('新增失败！');
+        }
+      }
+
+    })
+
+  });
+
+
+  //给全选加点击事件
+  $('thead :checkbox').click(function () {
+
+    var res = this.checked;
+    $('tbody :checkbox').prop('checked', res);
+
+    if (res) {
+
+      $('.page-action a').fadeIn();
+    } else {
+
+      $('.page-action a').fadeOut();
+    }
+  });
+
+  //tbody里的checkbox的点击事件
+  function doCheck() {
+
+    var res = $('tbody :checked').length == $('tbody :checkbox').length;
+
+    $('thead :checkbox').prop('checked', res);
+
+    if ($('tbody :checked').length > 0) {
+
+      $('.page-action a').fadeIn();
+    } else {
+
+      $('.page-action a').fadeOut();
+    }
+  };
+
+  //删除单行的点击事件
+  function deleteTr(index) {
+
+    //根据下标删除数组中的某个元素
+    sliderList.splice(index, 1);
+
+    //转成JSON字符串，发请求
+    var jsonStr = JSON.stringify(sliderList);
+
+    //发请求
+    $.post({
+
+      url: "api/updateSliders.php",
+      data: { list: jsonStr },
+      success: function (obj) {
+
+        if (obj == 'ok') {
+
+          alert('删除成功！');
+          //整个网页
+          location.reload();
+
+        } else {
+
+          alert('删除失败！');
+        }
+      }
+
+    })
+  };
+
+
+  //批量删除的点击事件
+  function batchDelete() {
+
+    //怎么做批量？
+    //准备一个保存要删除的下标数组
+    var newArr = [];
+
+    $('tbody :checked').each(function (index, ele) {
+
+      // 不能在这里直接删，因为这里都是从前往后遍历
+      // sliderList.splice(ele.value,1);
+
+      newArr.push(ele.value);
+
+    })
+
+    //从后往前遍历
+    for (var i = newArr.length - 1; i >= 0; i--) {
+
+      sliderList.splice(newArr[i], 1);
+    }
+
+    //转成json字符串
+    var jsonStr = JSON.stringify(sliderList);
+
+    //发送请求
+    $.post({
+
+      url: "api/updateSliders.php",
+      data: { list: jsonStr },
+      success: function (obj) {
+
+        if (obj == 'ok') {
+
+          alert('删除成功！');
+          //整个网页
+          location.reload();
+
+        } else {
+
+          alert('删除失败！');
+        }
+      }
+
+    })
+
+  }
+
+
+</script>

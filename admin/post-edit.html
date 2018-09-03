@@ -1,49 +1,32 @@
-<!-- 
-    1.先做准备工作
-        1.1 把内容变成富文本
-        1.2 把创建时间设置为当前时间
-        1.3 把分类查出来加到下拉框
 
-    
-    2.创建接口
-          接口获得的参数名最好跟表单元素的name一致
-
-    3.给保存加一个id,然后找到它，给它加一个点击事件
-        3.1 阻止事件默认实现
-        3.2 创建formdata对象，并传入一个表单
-        3.3 给formdata对象单独加一个content，值就是富文本的内容
-        3.4 发请求，做判断
-
--->
 
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
-  <!-- 最好页面一打开发请求，判断是否登录 -->
-  <script>
+    <!-- 最好页面一打开发请求，判断是否登录 -->
+    <script>
 
-    //发一个请求
-    var xhr = new XMLHttpRequest();
-
-    xhr.open('get', 'api/checkLogin.php', false);
-
-    //同步任务的话，记得先把事件监听的代码放在send前面
-    xhr.onload = function () {
-
-      //不等于代表没有登录
-      if (xhr.responseText != "loginOK") {
-        //如果没有登录，打回登录页面
-        location = "login.html";
-        return;
-      }
-
-    }
-
-    //发送请求
-    xhr.send();
-
-  </script>
+        //发一个请求
+        var xhr = new XMLHttpRequest();
+    
+        xhr.open('get', 'api/checkLogin.php', false);
+    
+        //同步任务的话，记得先把事件监听的代码放在send前面
+        xhr.onload = function () {
+    
+          //不等于代表没有登录
+          if (xhr.responseText != "loginOK") {
+            //如果没有登录，打回登录页面
+            location = "login.html";
+            return;
+          }
+    
+        }
+    
+        //发送请求
+        xhr.send();
+    
+      </script>
   <meta charset="utf-8">
   <title>Add new post &laquo; Admin</title>
   <link rel="stylesheet" href="../assets/vendors/bootstrap/css/bootstrap.css">
@@ -52,7 +35,6 @@
   <link rel="stylesheet" href="../assets/css/admin.css">
   <script src="../assets/vendors/nprogress/nprogress.js"></script>
 </head>
-
 <body>
   <script>NProgress.start()</script>
 
@@ -60,14 +42,8 @@
     <nav class="navbar">
       <button class="btn btn-default navbar-btn fa fa-bars"></button>
       <ul class="nav navbar-nav navbar-right">
-        <li>
-          <a href="profile.html">
-            <i class="fa fa-user"></i>个人中心</a>
-        </li>
-        <li>
-          <a href="api/logout.php">
-            <i class="fa fa-sign-out"></i>退出</a>
-        </li>
+        <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
+        <li><a href="api/logout.php"><i class="fa fa-sign-out"></i>退出</a></li>
       </ul>
     </nav>
     <div class="container-fluid">
@@ -95,14 +71,12 @@
           <div class="form-group">
             <label for="slug">别名</label>
             <input id="slug" class="form-control" name="slug" type="text" placeholder="slug">
-            <p class="help-block">https://zce.me/post/
-              <strong>slug</strong>
-            </p>
+            <p class="help-block">https://zce.me/post/<strong>slug</strong></p>
           </div>
           <div class="form-group">
             <label for="feature">特色图像</label>
             <!-- show when image chose -->
-            <img id="icon" class="help-block thumbnail" style="display: none">
+            <img id="icon" class="help-block thumbnail">
             <input id="feature" class="form-control" name="feature" type="file">
           </div>
           <div class="form-group">
@@ -138,49 +112,32 @@
     </div>
     <ul class="nav">
       <li>
-        <a href="index.html">
-          <i class="fa fa-dashboard"></i>仪表盘</a>
+        <a href="index.html"><i class="fa fa-dashboard"></i>仪表盘</a>
       </li>
       <li class="active">
         <a href="#menu-posts" data-toggle="collapse">
-          <i class="fa fa-thumb-tack"></i>文章
-          <i class="fa fa-angle-right"></i>
+          <i class="fa fa-thumb-tack"></i>文章<i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-posts" class="collapse in">
-          <li>
-            <a href="posts.html">所有文章</a>
-          </li>
-          <li class="active">
-            <a href="post-add.html">写文章</a>
-          </li>
-          <li>
-            <a href="categories.html">分类目录</a>
-          </li>
+          <li><a href="posts.html">所有文章</a></li>
+          <li class="active"><a href="post-add.html">写文章</a></li>
+          <li><a href="categories.html">分类目录</a></li>
         </ul>
       </li>
       <li>
-        <a href="comments.html">
-          <i class="fa fa-comments"></i>评论</a>
+        <a href="comments.html"><i class="fa fa-comments"></i>评论</a>
       </li>
       <li>
-        <a href="users.html">
-          <i class="fa fa-users"></i>用户</a>
+        <a href="users.html"><i class="fa fa-users"></i>用户</a>
       </li>
       <li>
         <a href="#menu-settings" class="collapsed" data-toggle="collapse">
-          <i class="fa fa-cogs"></i>设置
-          <i class="fa fa-angle-right"></i>
+          <i class="fa fa-cogs"></i>设置<i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-settings" class="collapse">
-          <li>
-            <a href="nav-menus.html">导航菜单</a>
-          </li>
-          <li>
-            <a href="slides.html">图片轮播</a>
-          </li>
-          <li>
-            <a href="settings.html">网站设置</a>
-          </li>
+          <li><a href="nav-menus.html">导航菜单</a></li>
+          <li><a href="slides.html">图片轮播</a></li>
+          <li><a href="settings.html">网站设置</a></li>
         </ul>
       </li>
     </ul>
@@ -190,7 +147,6 @@
   <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
   <script>NProgress.done()</script>
 </body>
-
 </html>
 
 <script src="/assets/vendors/wangEditor.min.js"></script>
@@ -203,73 +159,112 @@
   var editor = new wangEditor('#content');
   editor.create();
 
-  //2，让时间显示当前时间
-  document.getElementById('created').value = moment().format('YYYY-MM-DDTHH:mm');
-
-
-  //2---插播： 给上传图片加预览功能
-  $('#feature').change(function () {
-
-    //创建成url对象
-    var url = URL.createObjectURL(this.files[0]);
-    //交给img的src
-    $('#icon').attr('src', url).show();
-  })
-
-
-  //3. 把数据库中的分类数据读取到界面
+  //2. 把数据库中的分类数据读取到界面
   $.get({
 
-    url: "api/getCategory.php",
-    dataType: "json",
-    success: function (obj) {
+    url:"api/getCategory.php",
+    dataType:"json",
+    success:function(obj){
 
-      for (var i = 0; i < obj.length; i++) {
+        for(var i = 0; i < obj.length; i++){
 
-        //创建option
-        $('<option value="' + obj[i].id + '">' + obj[i].name + '</option>').appendTo($('#category'));
-      }
-
+          //创建option
+          $('<option value="' + obj[i].id +'">'+ obj[i].name +'</option>').appendTo( $('#category') );
+        }
     }
   });
 
 
-  $('#save').click(function (e) {
+  //2---插播： 给上传图片加预览功能
+  $('#feature').change(function(){
 
-    e = e || window.event;
-    e.preventDefault();
+    //创建成url对象
+    var url = URL.createObjectURL(this.files[0]);
+    //交给img的src
+    $('#icon').attr('src',url);
+  })
 
-    //拿到界面的各种值
-    //用FormData对象，因为它能自动获取到表单里带name的所有元素的值，它也可以实现异步上传文件
+
+  //3. 页面打开就把数据展现到界面上
+  // 3.1 拿到传递过来的id
+  // console.log(location.search);
+  //按=切割成数组
+  var arr = location.search.split('=');
+
+  //先拿到id=xxx 右边那一部分
+  var id = arr[1];
+
+  
+  //判断是否包含&
+  if(arr[1].indexOf('&') != -1){
+
+    //截取字符串，截取到&这个下标位置前一位
+    //substring:作用截取字符串
+    //参数1：从哪个下标开始截
+    //参数2：在哪个下标结束（截取时不包含结束下标那个字符）
+    id = arr[1].substring(0,arr[1].indexOf('&'));
+
+  }
+
+  //根据id去查询数据，展现到界面上
+  $.get({
+
+    url:"api/getPostsById.php",
+    data:"id="+id,
+    dataType:"json",
+    success:function(obj){
+
+        $('#title').val(obj.title);
+        editor.txt.html( obj.content );
+        $('#slug').val(obj.slug);
+        $('#icon').attr('src',obj.feature);
+        $('#category').val(obj.category_id);
+
+        //注意：moment()不传参数代表获取当前时间来格式化，传一个时间就代表用你传的时间来格式化
+        $('#created').val( moment( obj.created ).format('YYYY-MM-DDTHH:mm') );
+
+        $('#status').val(obj.status);
+     
+    }
+  });
+
+
+
+  $('#save').click(function(e){
+
+    //阻止事件默认行为
+      e = e || window.event;
+      e.preventDefault();
+
+    //要拿到界面上的所有数据
     var fm = new FormData(document.querySelector('form'));
+    fm.append('content',editor.txt.html());
+    fm.append('id',id);
 
-    //可以取到某个key对应的值
-    //注意：formdata只能拿到表单元素的值，而div（也就是我们的富文本）不是表单元素，所以拿不到
-    //虽然它没法自动拿到，但是，我可以自己加！需要用到formdata的append方法
-    fm.append('content', editor.txt.html());
-
-    //只要去请求接口就行了
+    //发请求去修改数据库
     $.post({
 
-      url: "api/addPosts.php",
-      data: fm,
-      contentType: false,
-      processData: false,
-      success: function (obj) {
+      url:"api/updatePosts.php",
+      data:fm,
+      contentType:false,
+      processData:false,
+      success:function(obj){
 
-        if (obj == 'ok') {
+          if(obj == 'ok'){
 
-          alert('新增成功！');
-          //跳转到文章列表
-          location = "posts.html";
+            alert('修改成功！');
+            location = 'posts.html';
 
-        } else {
+          }else{
 
-          alert('新增失败！');
-        }
+            alert('修改失败');
+          }
       }
     });
-
   })
+  
+  
+
+
 
 </script>

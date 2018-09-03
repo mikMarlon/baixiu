@@ -1,3 +1,31 @@
+<?php 
+
+    require_once "admin/api/tools/doSql.php";
+
+    //查出所有分类
+    $sql = "select *from categories";
+    $cateList = my_Select($sql);
+
+
+    //拿到传递过来的名字
+    $name = $_GET['name'];
+
+    //拿到传递过来的分类id
+    $cate_id = $_GET['cateId'];
+
+
+    $sql = "select p.title,u.nickname,p.created,p.content,p.views,p.likes,p.feature,p.id from posts p
+    inner join users u
+    on p.user_id = u.id
+    where p.status = 'published'
+    and p.category_id = $cate_id
+    order by p.id desc
+    limit 3";
+
+    //查到文章
+    $postList = my_Select($sql);
+?>
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -18,12 +46,11 @@
       </ul>
     </div>
     <div class="header">
-      <h1 class="logo"><a href="index.html"><img src="assets/img/logo.png" alt=""></a></h1>
+      <h1 class="logo"><a href="index.php"><img src="assets/img/logo.png" alt=""></a></h1>
       <ul class="nav">
-        <li><a href="javascript:;"><i class="fa fa-glass"></i>奇趣事</a></li>
-        <li><a href="javascript:;"><i class="fa fa-phone"></i>潮科技</a></li>
-        <li><a href="javascript:;"><i class="fa fa-fire"></i>会生活</a></li>
-        <li><a href="javascript:;"><i class="fa fa-gift"></i>美奇迹</a></li>
+      <?php foreach($cateList as $value): ?>
+        <li><a href="list.php?name=<?php echo $value['name']; ?>&cateId=<?php echo $value['id']; ?>"><i class="fa fa-glass"></i><?php echo $value['name']; ?></a></li>
+  <?php endforeach; ?>
       </ul>
       <div class="search">
         <form>
@@ -180,52 +207,79 @@
       </div>
     </div>
     <div class="content">
-      <div class="article">
-        <div class="breadcrumb">
-          <dl>
-            <dt>当前位置：</dt>
-            <dd><a href="javascript:;">奇趣事</a></dd>
-            <dd>变废为宝！将手机旧电池变为充电宝的Better RE移动电源</dd>
-          </dl>
+  
+      <div class="panel new">
+        <h3><?php echo $name; ?></h3>
+
+        <div class="entry">
+          <div class="head">
+            <a href="detail.php?id=<?php echo $postList[0]['id'];?>"><?php echo $postList[0]['title']; ?></a>
+          </div>
+          <div class="main">
+            <p class="info"><?php echo $postList[0]['nickname']; ?> 发表于 <?php echo $postList[0]['created']; ?></p>
+            <p class="brief"><?php echo $postList[0]['content']; ?></p>
+            <p class="extra">
+              <span class="reading">阅读(<?php echo $postList[0]['views']; ?>)</span>
+              <span class="comment">评论(0)</span>
+              <a href="javascript:;" class="like">
+                <i class="fa fa-thumbs-up"></i>
+                <span>赞(<?php echo $postList[0]['likes']; ?>)</span>
+              </a>
+              <a href="javascript:;" class="tags">
+                分类：<span><?php echo $name; ?></span>
+              </a>
+            </p>
+            <a href="javascript:;" class="thumb">
+              <img src="<?php echo $postList[0]['feature']; ?>" alt="">
+            </a>
+          </div>
         </div>
-        <h2 class="title">
-          <a href="javascript:;">又现酒窝夹笔盖新技能 城里人是不让人活了！</a>
-        </h2>
-        <div class="meta">
-          <span>DUX主题小秘 发布于 2015-06-29</span>
-          <span>分类: <a href="javascript:;">奇趣事</a></span>
-          <span>阅读: (2421)</span>
-          <span>评论: (143)</span>
-        </div>
-      </div>
-      <div class="panel hots">
-        <h3>热门推荐</h3>
-        <ul>
-          <li>
-            <a href="javascript:;">
+        <div class="entry">
+          <div class="head">
+            <a href="javascript:;">星球大战：原力觉醒视频演示 电影票68</a>
+          </div>
+          <div class="main">
+            <p class="info">admin 发表于 2015-06-29</p>
+            <p class="brief">星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯，星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯，星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯，星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯，星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯</p>
+            <p class="extra">
+              <span class="reading">阅读(3406)</span>
+              <span class="comment">评论(0)</span>
+              <a href="javascript:;" class="like">
+                <i class="fa fa-thumbs-up"></i>
+                <span>赞(167)</span>
+              </a>
+              <a href="javascript:;" class="tags">
+                分类：<span>星球大战</span>
+              </a>
+            </p>
+            <a href="javascript:;" class="thumb">
               <img src="uploads/hots_2.jpg" alt="">
-              <span>星球大战:原力觉醒视频演示 电影票68</span>
             </a>
-          </li>
-          <li>
-            <a href="javascript:;">
-              <img src="uploads/hots_3.jpg" alt="">
-              <span>你敢骑吗？全球第一辆全功能3D打印摩托车亮相</span>
+          </div>
+        </div>
+        <div class="entry">
+          <div class="head">
+            <a href="javascript:;">星球大战：原力觉醒视频演示 电影票68</a>
+          </div>
+          <div class="main">
+            <p class="info">admin 发表于 2015-06-29</p>
+            <p class="brief">星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯，星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯，星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯，星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯，星球大战:原力觉醒：《星球大战:原力觉醒》中国首映盛典红毯</p>
+            <p class="extra">
+              <span class="reading">阅读(3406)</span>
+              <span class="comment">评论(0)</span>
+              <a href="javascript:;" class="like">
+                <i class="fa fa-thumbs-up"></i>
+                <span>赞(167)</span>
+              </a>
+              <a href="javascript:;" class="tags">
+                分类：<span>星球大战</span>
+              </a>
+            </p>
+            <a href="javascript:;" class="thumb">
+              <img src="uploads/hots_2.jpg" alt="">
             </a>
-          </li>
-          <li>
-            <a href="javascript:;">
-              <img src="uploads/hots_4.jpg" alt="">
-              <span>又现酒窝夹笔盖新技能 城里人是不让人活了！</span>
-            </a>
-          </li>
-          <li>
-            <a href="javascript:;">
-              <img src="uploads/hots_5.jpg" alt="">
-              <span>实在太邪恶！照亮妹纸绝对领域与私处</span>
-            </a>
-          </li>
-        </ul>
+          </div>
+        </div>
       </div>
     </div>
     <div class="footer">

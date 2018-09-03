@@ -1,6 +1,74 @@
+<!-- 
+
+  一、写出获取文章的接口
+        带2个，一个pageIndex，一个pageSize
+
+  二、页面一打开就要加载数据
+        所以封装一个函数，函数里发ajax请求，这个函数需要传入一个参数，就是你要查询的页码
+
+  三、用插件显示页码
+        在响应完成里调用插件，生成页码
+
+  
+  四、写一个获取所有分类的接口
+
+  五、页面打开调用这个接口，生成option加到下拉框
+        1.在响应完成里创建option
+        2.把name作为option的innerHTML，把id作为option的value
+        3.记得给下拉框加一个id，方便我们找到它，再把option加到这个下拉框里
+
+  
+  六、筛选加点击事件
+        1.先给筛选加一个id，方便找到它
+        2.点击事件里先阻止事件默认实现，然后调用loadData，因为点筛选也是为了查文章数据
+        3.此时接口还没有按分类筛选，接口要多加一个参数cate_id，传入分类id，在接口里获取这个值
+        4.判断如果这个值不为空，就要加一条sql语句 and p.category_id = $cate_id 
+        5.查数据总数量那也应该做判断，看加不加这条语句
+        6.修改loaddata,在参数那多加一个cate_id，它的值就是取出下拉框里的value
+
+
+  七：筛选添加状态条件
+        1.先给状态下拉框加一个id
+        2.给草稿和已发布加value值，分别是drafted和published
+        3.在loadData里多加一个status参数，传入状态下拉框的值
+        4.修改接口，接收status，并且判断是否为空，如果不为空加一条sql语句" and p.status = '$status'";
+  
+
+  八：解决分页插件不能重新设置总页数的问题
+        1.在创建分页之前，先调用插件的destroy方法
+        2.在创建分页的时候，加一个startPage参数，传入pageIndex(当前页)
+
+-->
+
+
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
+  <!-- 最好页面一打开发请求，判断是否登录 -->
+  <script>
+
+    //发一个请求
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('get', 'api/checkLogin.php', false);
+
+    //同步任务的话，记得先把事件监听的代码放在send前面
+    xhr.onload = function () {
+
+      //不等于代表没有登录
+      if (xhr.responseText != "loginOK") {
+        //如果没有登录，打回登录页面
+        location = "login.html";
+        return;
+      }
+
+    }
+
+    //发送请求
+    xhr.send();
+
+  </script>
   <meta charset="utf-8">
   <title>Posts &laquo; Admin</title>
   <link rel="stylesheet" href="../assets/vendors/bootstrap/css/bootstrap.css">
@@ -9,6 +77,7 @@
   <link rel="stylesheet" href="../assets/css/admin.css">
   <script src="../assets/vendors/nprogress/nprogress.js"></script>
 </head>
+
 <body>
   <script>NProgress.start()</script>
 
@@ -16,8 +85,14 @@
     <nav class="navbar">
       <button class="btn btn-default navbar-btn fa fa-bars"></button>
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-        <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+        <li>
+          <a href="profile.html">
+            <i class="fa fa-user"></i>个人中心</a>
+        </li>
+        <li>
+          <a href="api/logout.php">
+            <i class="fa fa-sign-out"></i>退出</a>
+        </li>
       </ul>
     </nav>
     <div class="container-fluid">
@@ -31,31 +106,43 @@
       </div> -->
       <div class="page-action">
         <!-- show when multiple checked -->
-        <a class="btn btn-danger btn-sm" href="javascript:;" style="display: none">批量删除</a>
+        <a id="batch-del" class="btn btn-danger btn-sm" href="javascript:;" style="display: none">批量删除</a>
+
         <form class="form-inline">
-          <select name="" class="form-control input-sm">
+          <select id="selCategory" name="" class="form-control input-sm">
             <option value="">所有分类</option>
-            <option value="">未分类</option>
           </select>
-          <select name="" class="form-control input-sm">
+          <select id="selStatus" name="" class="form-control input-sm">
             <option value="">所有状态</option>
-            <option value="">草稿</option>
-            <option value="">已发布</option>
+            <option value="drafted">草稿</option>
+            <option value="published">已发布</option>
           </select>
-          <button class="btn btn-default btn-sm">筛选</button>
+          <button id="btnSearch" class="btn btn-default btn-sm">筛选</button>
         </form>
         <ul class="pagination pagination-sm pull-right">
-          <li><a href="#">上一页</a></li>
-          <li><a href="#">1</a></li>
-          <li><a href="#">2</a></li>
-          <li><a href="#">3</a></li>
-          <li><a href="#">下一页</a></li>
+          <li>
+            <a href="#">上一页</a>
+          </li>
+          <li>
+            <a href="#">1</a>
+          </li>
+          <li>
+            <a href="#">2</a>
+          </li>
+          <li>
+            <a href="#">3</a>
+          </li>
+          <li>
+            <a href="#">下一页</a>
+          </li>
         </ul>
       </div>
       <table class="table table-striped table-bordered table-hover">
         <thead>
           <tr>
-            <th class="text-center" width="40"><input type="checkbox"></th>
+            <th class="text-center" width="40">
+              <input type="checkbox">
+            </th>
             <th>标题</th>
             <th>作者</th>
             <th>分类</th>
@@ -66,7 +153,9 @@
         </thead>
         <tbody>
           <tr>
-            <td class="text-center"><input type="checkbox"></td>
+            <td class="text-center">
+              <input type="checkbox">
+            </td>
             <td>随便一个名称</td>
             <td>小小</td>
             <td>潮科技</td>
@@ -78,7 +167,9 @@
             </td>
           </tr>
           <tr>
-            <td class="text-center"><input type="checkbox"></td>
+            <td class="text-center">
+              <input type="checkbox">
+            </td>
             <td>随便一个名称</td>
             <td>小小</td>
             <td>潮科技</td>
@@ -90,7 +181,9 @@
             </td>
           </tr>
           <tr>
-            <td class="text-center"><input type="checkbox"></td>
+            <td class="text-center">
+              <input type="checkbox">
+            </td>
             <td>随便一个名称</td>
             <td>小小</td>
             <td>潮科技</td>
@@ -113,32 +206,49 @@
     </div>
     <ul class="nav">
       <li>
-        <a href="index.html"><i class="fa fa-dashboard"></i>仪表盘</a>
+        <a href="index.html">
+          <i class="fa fa-dashboard"></i>仪表盘</a>
       </li>
       <li class="active">
         <a href="#menu-posts" data-toggle="collapse">
-          <i class="fa fa-thumb-tack"></i>文章<i class="fa fa-angle-right"></i>
+          <i class="fa fa-thumb-tack"></i>文章
+          <i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-posts" class="collapse in">
-          <li class="active"><a href="posts.html">所有文章</a></li>
-          <li><a href="post-add.html">写文章</a></li>
-          <li><a href="categories.html">分类目录</a></li>
+          <li class="active">
+            <a href="posts.html">所有文章</a>
+          </li>
+          <li>
+            <a href="post-add.html">写文章</a>
+          </li>
+          <li>
+            <a href="categories.html">分类目录</a>
+          </li>
         </ul>
       </li>
       <li>
-        <a href="comments.html"><i class="fa fa-comments"></i>评论</a>
+        <a href="comments.html">
+          <i class="fa fa-comments"></i>评论</a>
       </li>
       <li>
-        <a href="users.html"><i class="fa fa-users"></i>用户</a>
+        <a href="users.html">
+          <i class="fa fa-users"></i>用户</a>
       </li>
       <li>
         <a href="#menu-settings" class="collapsed" data-toggle="collapse">
-          <i class="fa fa-cogs"></i>设置<i class="fa fa-angle-right"></i>
+          <i class="fa fa-cogs"></i>设置
+          <i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-settings" class="collapse">
-          <li><a href="nav-menus.html">导航菜单</a></li>
-          <li><a href="slides.html">图片轮播</a></li>
-          <li><a href="settings.html">网站设置</a></li>
+          <li>
+            <a href="nav-menus.html">导航菜单</a>
+          </li>
+          <li>
+            <a href="slides.html">图片轮播</a>
+          </li>
+          <li>
+            <a href="settings.html">网站设置</a>
+          </li>
         </ul>
       </li>
     </ul>
@@ -146,6 +256,263 @@
 
   <script src="../assets/vendors/jquery/jquery.js"></script>
   <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
+
+  <!-- 如果是基于jquery的插件，那么要导入在jquery的后面 -->
+  <script src="/assets/vendors/twbs-pagination/jquery.twbsPagination.min.js"></script>
+
   <script>NProgress.done()</script>
 </body>
+
 </html>
+
+<!-- 导入模板 -->
+<script src="/assets/vendors/template-web.js"></script>
+
+<!-- 准备模板 -->
+<script type="text/html" id="tplPosts">
+
+{{ each list value }}
+  <tr>
+    <td class="text-center"><input  onclick="doCheck();" value="{{value.id}}" type="checkbox"></td>
+    <td>{{ value.title }}</td>
+    <td>{{ value.nickname }}</td>
+    <td>{{ value.name }}</td>
+    <td class="text-center">{{ value.created }}</td>
+
+  {{ if value.status == 'published' }}
+    <td class="text-center">已发布</td>
+  {{ else if value.status == 'drafted' }}
+    <td class="text-center">草稿</td>
+  {{/if}}
+
+    <td class="text-center">
+      <a href="post-edit.html?id={{ value.id }}" class="btn btn-default btn-xs">编辑</a>
+      <a href="javascript:deleteTr({{ value.id }});" class="btn btn-danger btn-xs">删除</a>
+    </td>
+  </tr>
+
+{{/each}}
+</script>
+
+
+<script type="text/html" id="tplPage">
+  <li><a href="#">上一页</a></li>
+
+<% for(var i =1; i <= totalPage; i++) { %>
+
+  <li><a href="#">{{i}}</a></li>
+
+<% } %>
+
+  <li><a href="#">下一页</a></li>
+</script>
+
+<script>
+
+  var currentPage, totalPage;
+
+  //页面一打开先查第一页数据
+  loadData(1);
+
+  //封装的查询数据方法
+  //方法里把数据展现到界面和生成页码
+  function loadData(pageIndex) {
+
+    //记录当前页
+    currentPage = pageIndex;
+
+    //发起一个请求
+    $.get({
+      url: "api/getPosts.php",
+      data:
+      {
+        pageIndex: pageIndex,
+        pageSize: 10,
+        cate_id: $('#selCategory').val(),
+        status: $('#selStatus').val()
+      },
+      dataType: "json",
+      success: function (obj) {
+
+        //记录总页数
+        totalPage = obj.totalPage;
+
+        //调用模板
+        var html1 = template('tplPosts', { list: obj.data });
+        $('tbody').html(html1);
+
+        // var html2 = template('tplPage',{ totalPage:obj.totalPage });
+        // $('.pagination').html(html2);
+
+        //先摧毁分页
+        $('.pagination').twbsPagination('destroy');
+        //用插件生成页码，一般插件的使用：1.先导入，2.调用跟插件名字同名的方法来初始化
+        //这个插件从效率的角度上考虑，只会生成一次总页数，后面第二次，第三次都无法改变，都是第一次设置的总页数
+        $('.pagination').twbsPagination({
+
+          totalPages: obj.totalPage,
+          visiblePages: 5,
+          startPage: pageIndex,
+          first: "首页",
+          prev: "上一页",
+          next: "下一页",
+          last: "尾页",
+          // 禁用初始化分页时就自动调用第一页的点击事件
+          initiateStartPageClick: false,
+
+          onPageClick: function (event, page) {
+
+            loadData(page);
+          }
+        });
+      }
+    });
+  };
+
+
+
+  //2. 加载分类数据
+  $.get({
+
+    url: "api/getCategory.php",
+    dataType: "json",
+    success: function (obj) {
+
+      //数组有多少个元素，就要创建多少个option
+      for (var i = 0; i < obj.length; i++) {
+
+        //创建option
+        var opt = document.createElement('option');
+
+        //给option加一个id，存在value里
+        opt.value = obj[i].id;
+
+        //给一个innerHTML
+        opt.innerHTML = obj[i].name;
+
+        //加到下拉框上
+        $('#selCategory').append(opt);
+      }
+
+    }
+  });
+
+
+  //3. 给筛选加点击事件
+  $('#btnSearch').click(function (e) {
+    //阻止默认行为
+    e = e || window.event;
+    e.preventDefault();
+
+    //拿到你选择的分类
+    //去接口发请求，获取文章数据
+    //这里写死查第一页，因为你都点了筛选，就应该从第一页全新开始
+    loadData(1);
+
+  })
+
+  //给全选加点击事件
+  $('thead :checkbox').click(function () {
+
+    //拿到自己的值
+    var res = this.checked;
+
+    //赋值给tbody里的checkbox
+    $('tbody :checkbox').prop('checked', res);
+
+
+    if (res) {
+      $('#batch-del').stop().fadeIn();
+    } else {
+      $('#batch-del').stop().fadeOut();
+    }
+  })
+
+
+  //tbody里每行checkbox的点击事件
+  function doCheck() {
+
+    //判断选中数量是否等于总数量，如果等于代表全选
+    //如果看不懂也可以换成昨天的if和else
+    var res = $('tbody :checked').length == $('tbody :checkbox').length;
+
+    $('thead :checkbox').prop('checked', res);
+
+    if ($('tbody :checked').length > 0) {
+      $('#batch-del').stop().fadeIn();
+    } else {
+      $('#batch-del').stop().fadeOut();
+    }
+  }
+
+
+  //单行删除的点击事件
+  function deleteTr(id) {
+
+    //要删除，其实就是发一个请求
+    $.post({
+
+      url: "api/deletePosts.php",
+      data: { ids: id },
+
+      success: function (obj) {
+
+        if (obj == 'ok') {
+          //刷新当前页
+          loadData(currentPage);
+        } else {
+
+          alert('删除失败');
+        }
+      }
+    });
+  }
+
+
+  //给批量删除加点击事件
+  $('#batch-del').click(function () {
+
+    //一定要给一个空
+    var str = "";
+
+    //遍历tbody中被选中的checkbox
+    $('tbody :checked').each(function (index, ele) {
+
+      str += ele.value + ',';
+    });
+
+    //去掉最后一个,
+    str = str.substr(0, str.length - 1);
+
+    //发请求批量删除
+    $.post({
+
+      url: "api/deletePosts.php",
+      data: { ids: str },
+
+      success: function (obj) {
+
+        if (obj == 'ok') {
+          
+          //既要满足是最后一页，还要满足是删除全部
+          if (currentPage == totalPage && $('tbody :checked').length == $('tbody :checkbox').length) {
+
+            loadData(currentPage - 1);
+
+          } else {
+            //刷新当前页
+            loadData(currentPage);
+          }
+
+          //取消全选
+          $('thead :checkbox').prop('checked',false);
+
+        } else {
+
+          alert('删除失败');
+        }
+      }
+    });
+  })
+
+</script>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+
+    <!-- 导入一个文件，并且读取文件的内容，当做JS代码来执行（会执行） -->
+    <!-- 导入文件内容，并且当JS代码执行，是异步还是同步？？
+            是同步的！
+
+        所以如果以后万一我们导入的文件里有比较耗时的代码，那么就会影响后面内容的执行或者说显示
+        所以，我们要想办法把导入文件并执行的行为，变成异步的
+
+        require.js可以帮我们异步导入一个文件
+
+
+    模块化开发：
+            一个功能称之为一个模块
+    -->
+    <!-- <script src="1.js"></script> -->
+
+    <!-- 导入插件 -->
+    <script src="require.js"></script>
+
+    <script>
+    
+        //调用以这个插件命名的函数
+        //参数1：数组，数组里面放你想导入的文件，如果想导入2个，数组长度为2
+        //参数2：这些所有的js文件异步加载完毕，会掉用的回调函数
+        require([ "1.js","js/data.js"],function(){
+
+            console.log(window.num);
+        });
+    
+    </script>
+
+
+
+</head>
+<body>
+
+    <!-- 如果以后希望生成一些测试文本，可以用 lorem+tab键  或者 lorem100 + tab键 -->
+    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere repudiandae aliquid dolor dignissimos, unde quasi! Quos suscipit sed sint. Neque ratione nihil quam explicabo possimus est! Earum praesentium fugiat eius nulla dolorem quisquam similique dolore? Laborum consectetur rem culpa quo deleniti officiis ducimus illo cupiditate recusandae doloribus ratione, quae eos incidunt qui possimus cum sunt aliquam unde amet repellendus assumenda quaerat iste nemo mollitia. Quas voluptate magni officiis earum aut hic dolorem, excepturi ratione cupiditate tempore optio quisquam architecto possimus repudiandae. Unde nobis voluptas ratione dolor possimus excepturi. Iure illum obcaecati provident excepturi aspernatur enim ex nemo tenetur suscipit reprehenderit deserunt, accusamus ipsum sed. Neque pariatur quae cupiditate soluta et natus eveniet repellat, quidem quibusdam quam. Sapiente perferendis quibusdam quasi accusantium, eaque, ipsum maxime nihil tempore incidunt praesentium alias modi quos dicta tempora dolore eius. Rerum ab totam fugiat magnam nemo harum enim eum neque esse odit maxime numquam, voluptate quibusdam, nisi, accusamus inventore quidem ipsam incidunt. Deserunt totam, non porro nemo aspernatur neque! Placeat, cumque ab rem veniam sit voluptas et suscipit ad eos necessitatibus? Eveniet, quibusdam eligendi. Tempora, dolore quam. Deleniti voluptatum assumenda pariatur voluptas expedita. In eum porro tempora, fuga repellendus error commodi, veniam unde incidunt quaerat accusantium tenetur exercitationem ex. Impedit dignissimos incidunt cupiditate exercitationem similique aspernatur labore minima quasi vero corrupti quibusdam sapiente dolore, magni veniam ex culpa quos, reprehenderit placeat atque error eaque laudantium est, harum ea! Nesciunt ea, iusto porro, maxime praesentium veniam neque aspernatur officiis quae vitae labore dolor tempore incidunt placeat commodi sapiente est aliquam cum harum. Soluta nobis maiores alias nulla eius, iusto commodi ipsum architecto quisquam facilis beatae, eum natus voluptates, laborum repudiandae! Hic blanditiis quia perferendis possimus voluptates recusandae magnam, quod excepturi accusamus dolor itaque quos quae atque. Dolores vel porro facere earum sed consectetur totam illo, voluptatem at tempore, animi consequatur quibusdam cupiditate ducimus sit perferendis quo, hic esse maxime iste eveniet debitis natus autem? Eius sed facere, consequuntur numquam non veritatis esse quos quidem maiores deleniti adipisci necessitatibus. Expedita in at ipsam libero dolore porro praesentium aspernatur, veritatis incidunt voluptates officiis officia eius et numquam sapiente natus quaerat perferendis aliquid sit. Aliquam ipsa fuga reiciendis corrupti deleniti accusamus explicabo unde? Eveniet sed eligendi aut? Magni veritatis recusandae voluptas sit, ipsam a asperiores fugit deserunt reprehenderit velit ut obcaecati minima eligendi hic impedit perferendis dolorum. Nesciunt minus similique velit, est mollitia repellendus ex eum, reprehenderit neque hic accusamus quibusdam odio magni corporis, ducimus eveniet fuga dicta! Error quibusdam magni, inventore fugiat quisquam assumenda nobis fuga molestiae architecto doloremque debitis vel perferendis obcaecati ipsa voluptatum cupiditate nemo eligendi exercitationem dolor eius sed a! Delectus sapiente sed atque quidem, in quas voluptatem saepe deleniti accusantium! Ducimus, ipsum eligendi incidunt ipsa earum autem in minus adipisci? Quam, quia explicabo magnam doloremque, pariatur porro repellendus in officia ratione reprehenderit reiciendis amet deleniti rem quae mollitia, blanditiis fugit voluptate inventore consectetur impedit. Odit possimus praesentium culpa nostrum et suscipit eius dolorem vel corrupti nulla dolore obcaecati quo dolor tempore magni, pariatur consequatur. Velit fugiat sint provident et perspiciatis quas, at est labore excepturi quisquam porro ratione alias aliquam molestiae architecto repellat vel quasi nisi iusto exercitationem ut. Deserunt laudantium rem maiores, dolorem est dolores suscipit eum quidem. Beatae repellat, delectus ut libero nostrum, similique optio esse ratione sunt laborum numquam et, quam maiores officiis nisi voluptatem modi facilis dolorem porro consequatur. Harum excepturi reiciendis maiores numquam nulla, ratione minima, libero debitis dicta voluptas iusto exercitationem accusamus natus adipisci, incidunt placeat impedit? Cum nisi magnam esse. Cumque dolore, vitae quod nulla ullam recusandae laboriosam soluta. Aut architecto vero, fuga unde necessitatibus quam, nam eveniet quis est maiores labore quod error, iusto alias esse amet minus! Aspernatur expedita aut cupiditate libero, nam illum dignissimos fuga omnis animi ducimus beatae nobis voluptates molestiae magni excepturi. Deserunt magnam blanditiis minus illum cum atque natus, libero voluptates, dolores officiis voluptatum eos fugit consequuntur corrupti nesciunt. Dicta cumque dolores quos velit officiis, accusamus assumenda nobis reprehenderit nemo rerum omnis architecto mollitia quo veritatis molestiae vitae optio non inventore ullam amet aut? Reiciendis iusto eligendi minus. Temporibus excepturi ut nostrum dolores non doloribus fugit, vitae a illum! Deserunt quaerat neque quod explicabo error? Voluptate est dolorem at perferendis quam velit nulla dolorum fuga impedit. Amet numquam asperiores animi, molestiae maxime adipisci nobis cupiditate dolores distinctio doloribus assumenda dolorum obcaecati, quo modi beatae, fuga deleniti fugit quas nulla id incidunt nemo. Adipisci dolorem consequuntur omnis, laudantium totam harum sapiente in nihil? Nobis, repellat ea voluptates neque eveniet tempore dignissimos error doloribus exercitationem autem quibusdam explicabo nesciunt maiores fugit alias officiis nam voluptate ab repellendus ipsa eum vero pariatur magni non? Accusamus odit repudiandae mollitia, rerum sint architecto iusto eligendi nihil quam harum dolorem, qui neque dolorum. Dolore quas et eius facilis facere inventore voluptas praesentium iure sit, esse sint in unde soluta voluptate deleniti suscipit libero beatae, vel voluptatum quibusdam. Incidunt consectetur corporis illo sit voluptatem velit cum odit alias odio quam vitae, necessitatibus saepe recusandae aut suscipit praesentium natus ducimus. Fugiat aliquam quia, reprehenderit totam rerum blanditiis assumenda alias deserunt at nulla, quod consectetur atque dolore est possimus aspernatur dolor excepturi! Maxime amet a sed quia deserunt eum veniam omnis illo quis officia, provident doloribus totam fugit, quo animi quidem sint rerum nobis pariatur delectus modi! Reprehenderit, ratione veniam. Sapiente ab beatae voluptas porro magni, tenetur doloribus illum culpa quae rerum necessitatibus. Quam reprehenderit qui labore a laborum quod totam praesentium pariatur delectus veniam cum explicabo vero beatae, natus sint magni? Tempore, impedit expedita perferendis sint tenetur animi placeat alias, molestias voluptatibus deleniti itaque eaque maiores, quam aspernatur? Deserunt unde iste quidem voluptatibus mollitia voluptatem tempore nulla vel reiciendis itaque? Hic dolore quia maxime soluta veritatis, eius quod voluptatibus exercitationem quam, voluptatem vel molestias nam unde eum magni nihil inventore dolorem ut impedit, alias sed minus laboriosam. Quod consectetur esse nihil sequi quas at neque, adipisci qui architecto dolore dignissimos eveniet, iusto corporis suscipit dolor necessitatibus voluptates ea laborum iste a magnam autem aliquid alias? Aspernatur saepe unde numquam?</p>
+</body>
+</html>

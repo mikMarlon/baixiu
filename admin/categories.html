@@ -1,6 +1,77 @@
+<!-- 
+  1.加载数据
+      1.1 封装一个函数，函数里发起一个获取所有分类的请求（接口不用，以前老早就写好了获取分类的接口）
+      1.2 导入模板
+      1.3 准备模板
+      1.4 调用模板
+
+  
+  2.把全选、全不选那些功能加上
+      2.1 给全选加点击事件
+              拿到自己的状态，赋值给tbody里的checkbox
+      2.2 如果是选中状态，显示批量，否则隐藏
+
+      2.3 用事件委托的形式，把事件注册在tbody，但只能由:checkbox触发
+            判断选中数是否等于总数，如果是全选勾上，否则全选去掉勾
+            如果选中数大于0，就要显示批量，否则隐藏
+
+  
+  3.做新增功能
+        3.1 先写一个新增的接口，两个参数一个name一个slug
+        3.2 给保存加一个id,方便找到它
+        3.3 添加点击事件
+              3.3.1 阻止默认实现
+              3.3.2 发起一个请求，请求刚刚写的接口，传入对应的参数，ok就调用loadData
+
+  
+  4.做编辑功能
+        4.1 写一个函数接收一个id参数，在模板里给编辑加点击事件，调用这个函数并传入自己的id
+        4.2 先准备一个全局变量用来记录查到的数据，在loadData的响应完成里，把数据存在全局变量
+        4.3 在编辑的点击事件里，遍历所有的数据，判断传进的来id是否等于当前遍历到的元素的id，如果等于，代表找到了，就把这个数据渲染到界面
+        4.4 将之前新增那个按钮的文字变为保存
+        4.5 在html里新增一个按钮叫取消（记得改样式）
+        4.6 点击事件里，显示出取消按钮
+        4.7 准备一个专门做修改的接口，传三个参数：name,slug,id
+        4.8 因为新增和修改都是调用同一个点击事件，所以在它这个按钮的点击事件里判断文字，如果文字是新增，那么就发新增的请求，否则就发修改的请求（请求里要发id，所以准备一个全局变量，在编辑的点击事件里记录住id）
+        4.9 响应完成刷新数据，并清空内容，和把按钮文字变为新增，隐藏取消按钮
+
+  5. 取消点击事件
+        清空界面，隐藏取消，按钮文字变新增
+
+
+  6.做删除和批量删除
+        略
+
+-->
+
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
+  <!-- 最好页面一打开发请求，判断是否登录 -->
+  <script>
+
+    //发一个请求
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('get', 'api/checkLogin.php', false);
+
+    //同步任务的话，记得先把事件监听的代码放在send前面
+    xhr.onload = function () {
+
+      //不等于代表没有登录
+      if (xhr.responseText != "loginOK") {
+        //如果没有登录，打回登录页面
+        location = "login.html";
+        return;
+      }
+
+    }
+
+    //发送请求
+    xhr.send();
+
+  </script>
   <meta charset="utf-8">
   <title>Categories &laquo; Admin</title>
   <link rel="stylesheet" href="../assets/vendors/bootstrap/css/bootstrap.css">
@@ -9,6 +80,7 @@
   <link rel="stylesheet" href="../assets/css/admin.css">
   <script src="../assets/vendors/nprogress/nprogress.js"></script>
 </head>
+
 <body>
   <script>NProgress.start()</script>
 
@@ -16,8 +88,14 @@
     <nav class="navbar">
       <button class="btn btn-default navbar-btn fa fa-bars"></button>
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-        <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+        <li>
+          <a href="profile.html">
+            <i class="fa fa-user"></i>个人中心</a>
+        </li>
+        <li>
+          <a href="api/logout.php">
+            <i class="fa fa-sign-out"></i>退出</a>
+        </li>
       </ul>
     </nav>
     <div class="container-fluid">
@@ -39,22 +117,27 @@
             <div class="form-group">
               <label for="slug">别名</label>
               <input id="slug" class="form-control" name="slug" type="text" placeholder="slug">
-              <p class="help-block">https://zce.me/category/<strong>slug</strong></p>
+              <p class="help-block">https://zce.me/category/
+                <strong>slug</strong>
+              </p>
             </div>
             <div class="form-group">
-              <button class="btn btn-primary" type="submit">添加</button>
+              <button id="save" class="btn btn-primary" type="submit">添加</button>
+              <button id="cancel" class="btn btn-default" type="submit" style="display:none;">取消</button>
             </div>
           </form>
         </div>
         <div class="col-md-8">
           <div class="page-action">
             <!-- show when multiple checked -->
-            <a class="btn btn-danger btn-sm" href="javascript:;" style="display: none">批量删除</a>
+            <a id="batch-del" class="btn btn-danger btn-sm" href="javascript:;" style="display: none">批量删除</a>
           </div>
           <table class="table table-striped table-bordered table-hover">
             <thead>
               <tr>
-                <th class="text-center" width="40"><input type="checkbox"></th>
+                <th class="text-center" width="40">
+                  <input type="checkbox">
+                </th>
                 <th>名称</th>
                 <th>Slug</th>
                 <th class="text-center" width="100">操作</th>
@@ -62,7 +145,9 @@
             </thead>
             <tbody>
               <tr>
-                <td class="text-center"><input type="checkbox"></td>
+                <td class="text-center">
+                  <input type="checkbox">
+                </td>
                 <td>未分类</td>
                 <td>uncategorized</td>
                 <td class="text-center">
@@ -71,7 +156,9 @@
                 </td>
               </tr>
               <tr>
-                <td class="text-center"><input type="checkbox"></td>
+                <td class="text-center">
+                  <input type="checkbox">
+                </td>
                 <td>未分类</td>
                 <td>uncategorized</td>
                 <td class="text-center">
@@ -80,7 +167,9 @@
                 </td>
               </tr>
               <tr>
-                <td class="text-center"><input type="checkbox"></td>
+                <td class="text-center">
+                  <input type="checkbox">
+                </td>
                 <td>未分类</td>
                 <td>uncategorized</td>
                 <td class="text-center">
@@ -102,32 +191,49 @@
     </div>
     <ul class="nav">
       <li>
-        <a href="index.html"><i class="fa fa-dashboard"></i>仪表盘</a>
+        <a href="index.html">
+          <i class="fa fa-dashboard"></i>仪表盘</a>
       </li>
       <li class="active">
         <a href="#menu-posts" data-toggle="collapse">
-          <i class="fa fa-thumb-tack"></i>文章<i class="fa fa-angle-right"></i>
+          <i class="fa fa-thumb-tack"></i>文章
+          <i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-posts" class="collapse in">
-          <li><a href="posts.html">所有文章</a></li>
-          <li><a href="post-add.html">写文章</a></li>
-          <li class="active"><a href="categories.html">分类目录</a></li>
+          <li>
+            <a href="posts.html">所有文章</a>
+          </li>
+          <li>
+            <a href="post-add.html">写文章</a>
+          </li>
+          <li class="active">
+            <a href="categories.html">分类目录</a>
+          </li>
         </ul>
       </li>
       <li>
-        <a href="comments.html"><i class="fa fa-comments"></i>评论</a>
+        <a href="comments.html">
+          <i class="fa fa-comments"></i>评论</a>
       </li>
       <li>
-        <a href="users.html"><i class="fa fa-users"></i>用户</a>
+        <a href="users.html">
+          <i class="fa fa-users"></i>用户</a>
       </li>
       <li>
         <a href="#menu-settings" class="collapsed" data-toggle="collapse">
-          <i class="fa fa-cogs"></i>设置<i class="fa fa-angle-right"></i>
+          <i class="fa fa-cogs"></i>设置
+          <i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-settings" class="collapse">
-          <li><a href="nav-menus.html">导航菜单</a></li>
-          <li><a href="slides.html">图片轮播</a></li>
-          <li><a href="settings.html">网站设置</a></li>
+          <li>
+            <a href="nav-menus.html">导航菜单</a>
+          </li>
+          <li>
+            <a href="slides.html">图片轮播</a>
+          </li>
+          <li>
+            <a href="settings.html">网站设置</a>
+          </li>
         </ul>
       </li>
     </ul>
@@ -137,4 +243,239 @@
   <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
   <script>NProgress.done()</script>
 </body>
+
 </html>
+
+<!-- 导入模板 -->
+<script src="/assets/vendors/template-web.js"></script>
+<!-- 准备模板 -->
+<script type="text/html" id="tpl">
+
+{{ each list value }}
+  <tr>
+      <td class="text-center"><input value="{{value.id}}" type="checkbox"></td>
+      <td>{{ value.name }}</td>
+      <td>{{ value.slug }}</td>
+      <td class="text-center">
+        <a href="javascript:doEdit( {{ value.id }} );" class="btn btn-info btn-xs">编辑</a>
+        <a href="javascript:doDelete( {{ value.id }} );" class="btn btn-danger btn-xs">删除</a>
+      </td>
+  </tr>
+{{/each}}
+</script>
+
+
+<script>
+
+  //专门用来保存数据的数组
+  var list, editID;
+
+  //加载数据
+  loadData();
+
+  function loadData() {
+
+    //就发起一个请求，去请求所有分类的数据
+    $.get({
+
+      url: "api/getCategory.php",
+      dataType: "json",
+      success: function (obj) {
+
+        //记录数据
+        list = obj;
+        console.log(list);
+
+        //生成模板
+        var html = template('tpl', { list: obj });
+        $('tbody').html(html);
+      }
+    });
+  }
+
+
+  //全选点击事件
+  $('thead :checkbox').click(function () {
+
+    var res = this.checked;
+
+    //赋值给tbody里的所有checkbox
+    $('tbody :checkbox').prop('checked', res);
+
+    if (res) {
+
+      $('#batch-del').stop().fadeIn();
+    } else {
+      $('#batch-del').stop().fadeOut();
+    }
+
+  });
+
+  //用事件委托的形式，给tbody里面的checkbox加点击事件
+  $('tbody').on('click', ':checkbox', function () {
+
+    if ($('tbody :checked').length == $('tbody :checkbox').length) {
+
+      $('thead :checkbox').prop('checked', true);
+    } else {
+
+      $('thead :checkbox').prop('checked', false);
+    }
+
+    if ($('tbody :checked').length > 0) {
+
+      $('#batch-del').stop().fadeIn();
+    } else {
+
+      $('#batch-del').stop().fadeOut();
+    }
+  });
+
+
+  //给新增按钮加点击事件
+  $('#save').click(function (e) {
+
+    e = e || window.event;
+    e.preventDefault();
+
+    if (this.innerHTML == "添加") {
+      //这是做新增的请求
+      $.post({
+
+        url: "api/addCategory.php",
+        data: { slug: $('#slug').val(), name: $('#name').val() },
+        success: function (obj) {
+
+          if (obj == 'ok') {
+
+            loadData();
+          } else {
+
+            alert('新增失败');
+          }
+        }
+      });
+
+    } else {
+
+      //要么做修改
+      $.post({
+
+        url: "api/updateCategory.php",
+        data: { name: $('#name').val(), slug: $('#slug').val(), id: editID },
+        success: function (obj) {
+
+          if (obj == 'ok') {
+
+            loadData();
+
+            //手动调用一次取消的点击事件
+            $('#cancel').click();
+
+          } else {
+
+            alert('修改失败！');
+          }
+        }
+      });
+    }
+
+  });
+
+
+  //编辑按钮的点击事件
+  function doEdit(id) {
+
+    //记录当前修改的id
+    editID = id;
+
+    //遍历数组
+    for (var i = 0; i < list.length; i++) {
+
+      //如果我被点击的那行的id，等于当前遍历到的元素的id
+      //就代表找到了
+      if (id == list[i].id) {
+
+        //把找到的这行数据，显示给界面
+        $('#name').val(list[i].name);
+        $('#slug').val(list[i].slug);
+
+        break; //找到了就没必要再遍历了
+      }
+    }
+
+    //把按钮文字变为保存
+    $('#save').text('保存');
+    $('#cancel').show();
+  }
+
+
+  //给取消按钮加点击事件
+  $('#cancel').click(function (e) {
+
+    e = e || window.event;
+    e.preventDefault();
+
+    //把保存按钮文字改为添加
+    $('#save').text('添加');
+
+    //注意：记得要给空字符串，这才代表赋值为空，否则只代表取值
+    $('#name').val('');
+    $('#slug').val('');
+
+    $(this).hide();
+  })
+
+
+  function doDelete(id) {
+
+    $.post({
+
+      url: "api/deleteCategory.php",
+      data: "ids=" + id,
+      success: function (obj) {
+
+        if (obj == 'ok') {
+
+          loadData();
+        } else {
+
+          alert('删除失败');
+        }
+      }
+    });
+  }
+
+  //批量删除的点击事件
+  $('#batch-del').click(function () {
+
+    //拼接id
+    var str = "";
+
+    $('tbody :checked').each(function (index, ele) {
+
+      str += ele.value + ",";
+    });
+
+    str = str.substr(0, str.length - 1);
+    
+    //发请求
+    $.post({
+
+      url: "api/deleteCategory.php",
+      data: "ids=" + str,
+      success: function (obj) {
+
+        if (obj == 'ok') {
+
+          loadData();
+        } else {
+
+          alert('删除失败');
+        }
+      }
+    });
+  })
+
+
+</script>

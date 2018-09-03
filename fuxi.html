@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+
+    <ul>
+        <li>隔壁老王1</li>
+        <li>隔壁老王2</li>
+        <li>隔壁老王3</li>
+        <li>隔壁老王4</li>
+        <li>隔壁老王5</li>
+    </ul>
+
+    <input type="button" id="btn" value="添加一个新的">
+</body>
+</html>
+
+<script src="assets/vendors/jquery/jquery.min.js"></script>
+
+<script>
+
+    //给5个li加点击事件
+    // $('li').click(function(){
+
+    //     alert(this.innerHTML);
+    // })
+
+
+    //虽然是给ul加的点击事件，但是只能由ul下面的li标签来触发
+    $('ul').on('click','li',function(){
+
+        alert(this.innerHTML);
+        
+    })
+
+
+
+    $('#btn').click(function(){
+
+        //创建一个新的li
+        $('<li>我是新的li</li>').appendTo($('ul'));
+    })
+
+
+
+</script>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <input type="text" id="user">
+    <input type="password" id="pwd">
+    <input type="checkbox" id="chk1">
+    <input type="checkbox" id="chk2">
+    <input type="checkbox" id="chk3">
+
+    <input type="button" id="btn" value="获取">
+</body>
+</html>
+
+<script src="assets/vendors/jquery/jquery.min.js"></script>
+
+<script>
+
+    // $('input[type=checkbox]'); lowB
+
+    //找到所有的checkbox
+    console.log($(':checkbox')); //No lowB
+
+    $('#btn').click(function(){
+
+        //点击后获取所有被选中的checkboX
+        console.log($(":checked"));
+        
+    })
+</script>

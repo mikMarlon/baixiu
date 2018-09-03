@@ -1,6 +1,62 @@
+<!-- 
+
+  一、判断是否登录
+      在一开始，就发一个同步请求
+        拿到响应体，判断是否有登录，如果没有登录，打回登录页
+
+
+  二、发送一个请求，去获取登录用户的信息
+      1.先写一个接口，接口里通过session取到登录用户的信息，然后转成JSON字符串返回
+
+      2.写一个jquery请求，请求这个接口，拿到数据后，展示到界面上（因为其他界面也需要展示，所以我们把这段代码写在jquery.js里面，因为所有页面都导入了jquery.js）
+
+  
+  三、获取网站信息
+        1.先写一个接口，接口里要分别执行5条SQL语句（自己看代码）
+              1.1 发现执行5条SQL语句，代码都是一样的，所以封装成函数，只是把SQL语句当参数传递进来，把查询到的结果返回就行了
+              因为这种查询可能很多界面都要用，所以写到一个文件里，谁要用，就引入这个文件就行了
+
+              1.2 接口里调用这个函数，分别获得5个数量
+
+              1.3 把5个数量组织成关联型数组
+
+              1.4 再把这个关联型数组转成JSON字符串返回
+
+
+        2.来到后台啊界面的index.html请求这个接口，把响应体展现到界面上
+
+-->
+
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
+
+  <!-- 最好页面一打开发请求，判断是否登录 -->
+  <script>
+
+    //发一个请求
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('get', 'api/checkLogin.php', false);
+
+    //同步任务的话，记得先把事件监听的代码放在send前面
+    xhr.onload = function () {
+
+      //不等于代表没有登录
+      if (xhr.responseText != "loginOK") {
+        //如果没有登录，打回登录页面
+        location = "login.html";
+        return;
+      }
+
+    }
+
+    //发送请求
+    xhr.send();
+
+  </script>
+
   <meta charset="utf-8">
   <title>Dashboard &laquo; Admin</title>
   <link rel="stylesheet" href="../assets/vendors/bootstrap/css/bootstrap.css">
@@ -9,6 +65,7 @@
   <link rel="stylesheet" href="../assets/css/admin.css">
   <script src="../assets/vendors/nprogress/nprogress.js"></script>
 </head>
+
 <body>
   <script>NProgress.start()</script>
 
@@ -16,15 +73,23 @@
     <nav class="navbar">
       <button class="btn btn-default navbar-btn fa fa-bars"></button>
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-        <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+        <li>
+          <a href="profile.html">
+            <i class="fa fa-user"></i>个人中心</a>
+        </li>
+        <li>
+          <a href="api/logout.php">
+            <i class="fa fa-sign-out"></i>退出</a>
+        </li>
       </ul>
     </nav>
     <div class="container-fluid">
       <div class="jumbotron text-center">
         <h1>One Belt, One Road</h1>
         <p>Thoughts, stories and ideas.</p>
-        <p><a class="btn btn-primary btn-lg" href="post-add.html" role="button">写文章</a></p>
+        <p>
+          <a class="btn btn-primary btn-lg" href="post-add.html" role="button">写文章</a>
+        </p>
       </div>
       <div class="row">
         <div class="col-md-4">
@@ -33,9 +98,14 @@
               <h3 class="panel-title">站点内容统计：</h3>
             </div>
             <ul class="list-group">
-              <li class="list-group-item"><strong>10</strong>篇文章（<strong>2</strong>篇草稿）</li>
-              <li class="list-group-item"><strong>6</strong>个分类</li>
-              <li class="list-group-item"><strong>5</strong>条评论（<strong>1</strong>条待审核）</li>
+              <li class="list-group-item">
+                <strong>10</strong>篇文章（
+                <strong>2</strong>篇草稿）</li>
+              <li class="list-group-item">
+                <strong>6</strong>个分类</li>
+              <li class="list-group-item">
+                <strong>5</strong>条评论（
+                <strong>1</strong>条待审核）</li>
             </ul>
           </div>
         </div>
@@ -47,37 +117,54 @@
 
   <div class="aside">
     <div class="profile">
-      <img class="avatar" src="../uploads/avatar.jpg">
-      <h3 class="name">布头儿</h3>
+      <img class="avatar" src="/assets/img/default.png" >
+      <h3 class="name"></h3>
     </div>
     <ul class="nav">
       <li class="active">
-        <a href="index.html"><i class="fa fa-dashboard"></i>仪表盘</a>
+        <a href="index.html">
+          <i class="fa fa-dashboard"></i>仪表盘</a>
       </li>
       <li>
         <a href="#menu-posts" class="collapsed" data-toggle="collapse">
-          <i class="fa fa-thumb-tack"></i>文章<i class="fa fa-angle-right"></i>
+          <i class="fa fa-thumb-tack"></i>文章
+          <i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-posts" class="collapse">
-          <li><a href="posts.html">所有文章</a></li>
-          <li><a href="post-add.html">写文章</a></li>
-          <li><a href="categories.html">分类目录</a></li>
+          <li>
+            <a href="posts.html">所有文章</a>
+          </li>
+          <li>
+            <a href="post-add.html">写文章</a>
+          </li>
+          <li>
+            <a href="categories.html">分类目录</a>
+          </li>
         </ul>
       </li>
       <li>
-        <a href="comments.html"><i class="fa fa-comments"></i>评论</a>
+        <a href="comments.html">
+          <i class="fa fa-comments"></i>评论</a>
       </li>
       <li>
-        <a href="users.html"><i class="fa fa-users"></i>用户</a>
+        <a href="users.html">
+          <i class="fa fa-users"></i>用户</a>
       </li>
       <li>
         <a href="#menu-settings" class="collapsed" data-toggle="collapse">
-          <i class="fa fa-cogs"></i>设置<i class="fa fa-angle-right"></i>
+          <i class="fa fa-cogs"></i>设置
+          <i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-settings" class="collapse">
-          <li><a href="nav-menus.html">导航菜单</a></li>
-          <li><a href="slides.html">图片轮播</a></li>
-          <li><a href="settings.html">网站设置</a></li>
+          <li>
+            <a href="nav-menus.html">导航菜单</a>
+          </li>
+          <li>
+            <a href="slides.html">图片轮播</a>
+          </li>
+          <li>
+            <a href="settings.html">网站设置</a>
+          </li>
         </ul>
       </li>
     </ul>
@@ -87,4 +174,29 @@
   <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
   <script>NProgress.done()</script>
 </body>
+
 </html>
+
+
+<script>
+
+    //发请求，获取网站信息数据
+    $.get({
+
+      url:"api/getWebInfo.php",
+      dataType:"json",
+      success:function(obj){
+
+        $('.list-group-item').eq(0).html('<strong>'+ obj.postsCount +'</strong>篇文章（<strong>'+ obj.draftedCount +'</strong>篇草稿）');
+
+        //$('.list-group-item').eq(1)代表找到下标1的li标签
+        // 再.children(strong)代表找子元素里标签为strong的元素，并把它的文字改成我们要的文字
+        $('.list-group-item').eq(1).children('strong').html(obj.categoryCount);
+
+        //把最后一个li标签修改成功
+        $('.list-group-item').eq(2).html('<strong>'+ obj.commentsCount +'</strong>条评论（<strong>'+ obj.heldCount +'</strong>条待审核）');
+        
+      }
+    })
+
+</script> 

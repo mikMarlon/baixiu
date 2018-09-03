@@ -1,6 +1,61 @@
+<!-- 
+
+  一、显示当前登录用户的信息
+        在页面加载完后，发一个请求，请求到获取用户信息的接口
+        拿到数据后，把数据展现在界面上
+
+  二、给上传文件加一个值改变事件，值改变事件里实现图片预览
+          思路：就是把上传的文件转为URL，再赋值给img的src
+
+  
+  三、先找到更新按钮，给它加一个id，然后给它写一个点击事件
+          1. 阻止默认跳转
+          2. 拿到界面上所有数据 (记得给file元素加name，还有给bio这个textarea加name)
+              2.1 我们用formdata拿数据
+              2.2 如果用jquery的ajax提交的话，记得要加processData:false  contentType:false
+          3. 提交到服务器专门用做更新用户的接口
+                3.1 拿到提交的数据
+                3.2 拿到上传的文件
+                      3.2.1 拿到文件名
+                      3.2.2 拿到临时目录
+                      3.2.3 把图片名转成GBK编码的名字
+                      3.2.4 移动临时目录的文件到新目录
+                3.3 开启session，拿到id
+                3.4 操作数据库那几步
+                      注意在修改数据库头像的时候，路径要换成UTF-8编码的路径
+
+                3.5 判断是否成功
+                      如果成功修改session（记得要修改，数据库都变了，session也应该变），返回ok
+ 
+-->
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <!-- 最好页面一打开发请求，判断是否登录 -->
+    <script>
+
+        //发一个请求
+        var xhr = new XMLHttpRequest();
+    
+        xhr.open('get', 'api/checkLogin.php', false);
+    
+        //同步任务的话，记得先把事件监听的代码放在send前面
+        xhr.onload = function () {
+    
+          //不等于代表没有登录
+          if (xhr.responseText != "loginOK") {
+            //如果没有登录，打回登录页面
+            location = "login.html";
+            return;
+          }
+    
+        }
+    
+        //发送请求
+        xhr.send();
+    
+      </script>
   <meta charset="utf-8">
   <title>Dashboard &laquo; Admin</title>
   <link rel="stylesheet" href="../assets/vendors/bootstrap/css/bootstrap.css">
@@ -17,7 +72,7 @@
       <button class="btn btn-default navbar-btn fa fa-bars"></button>
       <ul class="nav navbar-nav navbar-right">
         <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-        <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+        <li><a href="api/logout.php"><i class="fa fa-sign-out"></i>退出</a></li>
       </ul>
     </nav>
     <div class="container-fluid">
@@ -33,7 +88,7 @@
           <label class="col-sm-3 control-label">头像</label>
           <div class="col-sm-6">
             <label class="form-image">
-              <input id="avatar" type="file">
+              <input id="avatar" type="file" name="avatar">
               <img src="../assets/img/default.png">
               <i class="mask fa fa-upload"></i>
             </label>
@@ -63,12 +118,12 @@
         <div class="form-group">
           <label for="bio" class="col-sm-3 control-label">简介</label>
           <div class="col-sm-6">
-            <textarea id="bio" class="form-control" placeholder="Bio" cols="30" rows="6">MAKE IT BETTER!</textarea>
+            <textarea id="bio" name="bio" class="form-control" placeholder="Bio" cols="30" rows="6">MAKE IT BETTER!</textarea>
           </div>
         </div>
         <div class="form-group">
           <div class="col-sm-offset-3 col-sm-6">
-            <button type="submit" class="btn btn-primary">更新</button>
+            <button id="update" type="submit" class="btn btn-primary">更新</button>
             <a class="btn btn-link" href="password-reset.html">修改密码</a>
           </div>
         </div>
@@ -119,3 +174,83 @@
   <script>NProgress.done()</script>
 </body>
 </html>
+
+<script>
+
+  //1. 页面一打开就给后端发一个请求获取当前登录用户的信息并展现到界面上
+  $.get({
+
+    url:"api/getUserInfo.php",
+    dataType:"json",
+    success:function(obj){
+
+        //把头像路径给img
+        $('.form-image>img').attr('src',obj.avatar);
+
+        //把email给邮箱
+        $('#email').val(obj.email);
+
+        //把slug给别名
+        $('#slug').val(obj.slug);
+
+        //把nickname给昵称
+        $('#nickname').val(obj.nickname);
+
+        //把内容给简介
+        $('#bio').text(obj.bio);
+    }
+
+  });
+
+
+  //2. 给上传文件加一个值改变事件，这里做图片预览
+  $('#avatar').change(function(){
+
+     //拿到上传的文件，转成url
+     var url = URL.createObjectURL(this.files[0]);
+     //给Img的src去显示
+     $('.form-image>img').attr('src',url);
+     
+  });
+
+
+  //3. 给更新按钮加点击事件
+  $('#update').click(function(e){
+
+      //  1. 阻止默认跳转
+      e = e || window.event;
+      e.preventDefault();
+
+      //  2. 拿到界面上所有数据
+      // 它会自动把表单里带name属性的所有元素弄进来
+      var fm = new FormData(document.querySelector('form'));
+      //  3. 提交到服务器专门用做更新用户的接口
+
+      //用formdata后，还需要设置请求头吗？不需要！因为它内部会帮我们设置请求头
+      //用jquery发ajax请求的时候要设置请求头吗？也不需要，因为jquery内部也帮我们设置好了请求头
+      //解决办法：让Jquery不要设置请求头就可以了,jquery里写一个contentType:false 就代表不要让jquery设置请求头
+
+
+      //jquery发ajax请求，默认会把你传的data数据转换成字符串，所以如果你传了一个formdata对象，也是一个对象，它也会把这个对象尝试转换成字符串，不能成功！所以就报错！所以如果你用户formdata传值，就要告诉jquery说，哥们，你不要帮我转成字符串 解决办法：processData:false,
+
+      $.post({
+
+        url:"api/updateUserInfo.php",
+        data:fm,
+        processData:false,
+        contentType:false,
+        success:function(obj){
+
+            if(obj == "ok"){
+
+              location.reload();
+            }else{
+
+              alert('更新失败，请与管理员联系！');
+            }
+            
+        }
+      })
+  })
+
+</script>

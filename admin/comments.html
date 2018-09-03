@@ -1,6 +1,114 @@
+<!-- 
+
+  一、先准备了一个获取评论的接口（这个接口还带分页功能，后天稍微修改一下）
+      1. 需要两个参数，一个是要查的页码，一个是页容量
+      2. 返回的是一个JSON格式的字符串，根是一个数组
+      3. 注意SQL语句需要连表查询，连comments和posts表，因为评论要显示它发布在哪篇文章上，所以要文章标题
+          没必要查出所有字段，自己根据界面筛选需要的字段，几乎都在评论表里只有title在文章表（id也要查出来）
+
+  
+  二：请求接口，渲染数据
+      1.在页面最下面发一个请求，请求刚刚的接口，查第一页，和一页10条
+      2.在响应成功的回调函数里，渲染数据到界面上
+          2.1 先导入模板引擎
+          2.2 准备一个模板
+              2.2.1 遍历list，有多少个元素就有多少个tr
+              2.2.2 要记得判断状态，决定给tr要不要加danger这个class
+                    只有两种情况，为held就有danger，否则没有
+              2.2.3 其他的数据直接填充就行了
+              2.2.4 状态要转化为中文：approved -- 已批准  rejected -- 已拒绝 held--待审核
+              2.2.5 操作那也需要判断
+                    如果状态为held 就给 批准按钮 （btn-info）
+                    如果状态为approved 就给拒绝按钮 (btn-warning)
+          2.3 调用模板
+          2.4 加到tbody上
+
+
+  三：修改接口
+      1.先去getComments.php这个接口，加多一条SQL语句，查出所有的评论总数
+      2.根据评论总数算出总页数 ： ceil (总数 / 页容量)
+      3.返回时，要先把总页数和查出的分页数据放到一个对象里面，再转成JSON返回
+
+  `
+
+  四：完成前端部分
+      1.先把生成分页数据模板那传递的数据要改成obj.data
+      2.写一个模板，生成所有页码的
+          2.1 用for来遍历好一点，从1开始，小于等于总页数，每个li标签里直接写i就是页码
+          2.2 判断i是不是当前页，如果是给li要加一个类叫active，不是就不加
+          2.3 调用模板生成html加载到界面
+          2.4 把第一次请求的那段代码封装成函数，需要一个形参，传入要查询的页码
+          2.5 在模板里改a标签，改成 javascript:loadData({{i}})
+
+
+      3.给全选加点击事件
+          3.1 取出自己的checked
+          3.2 把自己的checked赋值给tbody下面所有的checkbox
+          3.3 判断checked是否为true，为true显示批量操作，为false就隐藏批量操作
+
+      4.给模板里的每一个checkbox加行内点击事件（提前写一个函数）
+          3.1 判断tbody里面选中的数量是否等于总数量
+              如果等于，让全选勾上，否则让它不勾
+
+          3.2 判断tbody力的选中数量是否大于，只要大于0就让批量操作显示，否则不显示
+  
+  五、做操作功能
+        1.先准备一个接口，这个接口接收两个参数：ids  status 这个接口以后单行，批量也可以用
+        2.准备一个函数，函数里对这个接口发请求，但是发现ids和status不能写死，所以当做参数传进来
+        3.在模板里给所有单行操作的a标签加点击事件，点击事件调用这个函数，传入自己的id和自己要对应的操作状态
+        4.响应完成里刷新当前页
+            4.1 先在外面声明一个全局变量
+            4.2 在loadData里把全局变量的赋值为page的值
+            4.3 在响应完成里调用loadData传入当前页
+
+  
+  六、批量操作
+        1.先准备一个函数，函数接收一个参数，参数是status，传入要修改的状态
+        2.给批量的每个按钮，加一个行内的点击事件，点击事件里调用刚刚这个函数，并且传入自己对应的状态
+        3.点击事件里
+            3.1 获取到所有tbody里所有被选中的checkbox，这样才能知道哪些行被选中
+            3.2 但是我们主要是为了拿到id，所以干脆把所有id存在每行的checkbox礼（所以这里记得要去改模板，给checkbox加value属性，值为id）
+            3.3 在点击事件里，找到tbody里所有被选中的checkbox,并且用each方法遍历它们
+            3.4 拼接遍历到的而每个checkbox的value值，记得加,
+            3.5 遍历完成去掉最后一个逗号（ 截取字符串，从0开始，截取的长度比原来少一个）
+            3.6 发请求，传入对应的拼接好的ids和状态
+            3.7 响应OK的情况下刷新当前页
+                  要做判断，如果既是最后一页又是删除还要全选被勾上了，那么就要刷新当前页-1 （记得先用全局变量保存总页数）
+                  其他的都刷新当前页
+                  记得无条件去掉全选的小勾勾
+
+
+-->
+
+
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN"> 
+
 <head>
+  <!-- 最好页面一打开发请求，判断是否登录 -->
+  <script>
+
+    //发一个请求
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('get', 'api/checkLogin.php', false);
+
+    //同步任务的话，记得先把事件监听的代码放在send前面
+    xhr.onload = function () {
+
+      //不等于代表没有登录
+      if (xhr.responseText != "loginOK") {
+        //如果没有登录，打回登录页面
+        location = "login.html";
+        return;
+      }
+
+    }
+
+    //发送请求
+    xhr.send();
+
+  </script>
   <meta charset="utf-8">
   <title>Comments &laquo; Admin</title>
   <link rel="stylesheet" href="../assets/vendors/bootstrap/css/bootstrap.css">
@@ -8,7 +116,14 @@
   <link rel="stylesheet" href="../assets/vendors/nprogress/nprogress.css">
   <link rel="stylesheet" href="../assets/css/admin.css">
   <script src="../assets/vendors/nprogress/nprogress.js"></script>
+
+  <style>
+    td {
+      max-width: 380px;
+    }
+  </style>
 </head>
+
 <body>
   <script>NProgress.start()</script>
 
@@ -16,8 +131,14 @@
     <nav class="navbar">
       <button class="btn btn-default navbar-btn fa fa-bars"></button>
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-        <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+        <li>
+          <a href="profile.html">
+            <i class="fa fa-user"></i>个人中心</a>
+        </li>
+        <li>
+          <a href="api/logout.php">
+            <i class="fa fa-sign-out"></i>退出</a>
+        </li>
       </ul>
     </nav>
     <div class="container-fluid">
@@ -31,22 +152,34 @@
       <div class="page-action">
         <!-- show when multiple checked -->
         <div class="btn-batch" style="display: none">
-          <button class="btn btn-info btn-sm">批量批准</button>
-          <button class="btn btn-warning btn-sm">批量拒绝</button>
-          <button class="btn btn-danger btn-sm">批量删除</button>
+          <button onclick="doBatch('approved');" class="btn btn-info btn-sm">批量批准</button>
+          <button onclick="doBatch('rejected');" class="btn btn-warning btn-sm">批量拒绝</button>
+          <button onclick="doBatch('trashed');" class="btn btn-danger btn-sm">批量删除</button>
         </div>
         <ul class="pagination pagination-sm pull-right">
-          <li><a href="#">上一页</a></li>
-          <li><a href="#">1</a></li>
-          <li><a href="#">2</a></li>
-          <li><a href="#">3</a></li>
-          <li><a href="#">下一页</a></li>
+          <li>
+            <a href="#">上一页</a>
+          </li>
+          <li>
+            <a href="#">1</a>
+          </li>
+          <li>
+            <a href="#">2</a>
+          </li>
+          <li>
+            <a href="#">3</a>
+          </li>
+          <li>
+            <a href="#">下一页</a>
+          </li>
         </ul>
       </div>
       <table class="table table-striped table-bordered table-hover">
         <thead>
           <tr>
-            <th class="text-center" width="40"><input type="checkbox"></th>
+            <th class="text-center" width="40">
+              <input type="checkbox">
+            </th>
             <th>作者</th>
             <th>评论</th>
             <th>评论在</th>
@@ -57,7 +190,9 @@
         </thead>
         <tbody>
           <tr class="danger">
-            <td class="text-center"><input type="checkbox"></td>
+            <td class="text-center">
+              <input type="checkbox">
+            </td>
             <td>大大</td>
             <td>楼主好人，顶一个</td>
             <td>《Hello world》</td>
@@ -69,7 +204,9 @@
             </td>
           </tr>
           <tr>
-            <td class="text-center"><input type="checkbox"></td>
+            <td class="text-center">
+              <input type="checkbox">
+            </td>
             <td>大大</td>
             <td>楼主好人，顶一个</td>
             <td>《Hello world》</td>
@@ -81,7 +218,9 @@
             </td>
           </tr>
           <tr>
-            <td class="text-center"><input type="checkbox"></td>
+            <td class="text-center">
+              <input type="checkbox">
+            </td>
             <td>大大</td>
             <td>楼主好人，顶一个</td>
             <td>《Hello world》</td>
@@ -104,32 +243,49 @@
     </div>
     <ul class="nav">
       <li>
-        <a href="index.html"><i class="fa fa-dashboard"></i>仪表盘</a>
+        <a href="index.html">
+          <i class="fa fa-dashboard"></i>仪表盘</a>
       </li>
       <li>
         <a href="#menu-posts" class="collapsed" data-toggle="collapse">
-          <i class="fa fa-thumb-tack"></i>文章<i class="fa fa-angle-right"></i>
+          <i class="fa fa-thumb-tack"></i>文章
+          <i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-posts" class="collapse">
-          <li><a href="posts.html">所有文章</a></li>
-          <li><a href="post-add.html">写文章</a></li>
-          <li><a href="categories.html">分类目录</a></li>
+          <li>
+            <a href="posts.html">所有文章</a>
+          </li>
+          <li>
+            <a href="post-add.html">写文章</a>
+          </li>
+          <li>
+            <a href="categories.html">分类目录</a>
+          </li>
         </ul>
       </li>
       <li class="active">
-        <a href="comments.html"><i class="fa fa-comments"></i>评论</a>
+        <a href="comments.html">
+          <i class="fa fa-comments"></i>评论</a>
       </li>
       <li>
-        <a href="users.html"><i class="fa fa-users"></i>用户</a>
+        <a href="users.html">
+          <i class="fa fa-users"></i>用户</a>
       </li>
       <li>
         <a href="#menu-settings" class="collapsed" data-toggle="collapse">
-          <i class="fa fa-cogs"></i>设置<i class="fa fa-angle-right"></i>
+          <i class="fa fa-cogs"></i>设置
+          <i class="fa fa-angle-right"></i>
         </a>
         <ul id="menu-settings" class="collapse">
-          <li><a href="nav-menus.html">导航菜单</a></li>
-          <li><a href="slides.html">图片轮播</a></li>
-          <li><a href="settings.html">网站设置</a></li>
+          <li>
+            <a href="nav-menus.html">导航菜单</a>
+          </li>
+          <li>
+            <a href="slides.html">图片轮播</a>
+          </li>
+          <li>
+            <a href="settings.html">网站设置</a>
+          </li>
         </ul>
       </li>
     </ul>
@@ -138,5 +294,280 @@
   <script src="../assets/vendors/jquery/jquery.js"></script>
   <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
   <script>NProgress.done()</script>
+
 </body>
+
 </html>
+
+<!-- 导入模板引擎 -->
+<script src="/assets/vendors/template-web.js"></script>
+
+<!-- 准备模板 -->
+<script type="text/html" id="tplComments">
+
+{{ each list value }}
+
+{{ if value.status == 'held' }}
+  <tr class="danger">
+{{ else }}
+  <tr>
+{{ /if }}
+
+      <td class="text-center"><input type="checkbox" value="{{ value.id }}" onclick="doCheck();"></td>
+      <td>{{value.author}}</td>
+      <td>{{value.content}}</td>
+      <td>《{{ value.title }}》</td>
+      <td>{{value.created}}</td>
+    
+    {{ if value.status == 'approved' }}
+      <td>已批准</td>
+    {{ else if value.status == 'held' }}
+      <td>待审核</td>
+    {{ else }}
+      <td>已拒绝</td>
+    {{ /if }}
+
+      <td class="text-center">
+
+      {{ if value.status == 'held' }}
+        <a href="javascript:doEdit( {{ value.id }} , 'approved'  );" class="btn btn-info btn-xs" >批准</a>
+      {{ else if value.status == 'approved' }}
+        <a href="javascript:doEdit( {{ value.id }} , 'rejected'  );" class="btn btn-warning btn-xs" >拒绝</a>
+      {{ /if }}
+
+        <a href="javascript:doEdit( {{ value.id }} , 'trashed'  );" class="btn btn-danger btn-xs">删除</a>
+      </td>
+    </tr>
+
+{{ /each }}
+</script>
+
+
+<script type="text/html" id="tplPage">
+
+{{ if currentPage == 1 }}
+  <li><a href="javascript:loadData( {{ totalPage }} )">上一页</a></li>
+{{ else }}
+  <li><a href="javascript:loadData( {{ currentPage - 1 }} )">上一页</a></li>
+{{ /if }}
+
+<% for( var i = 1; i <= totalPage; i++){ %>
+
+  {{ if i == currentPage }}
+    <li class="active"><a href="javascript:loadData({{ i }});"> {{ i }} </a></li>
+  {{ else }}
+    <li><a href="javascript:loadData({{ i }})"> {{ i }} </a></li>
+  {{ /if }}
+
+<% } %>
+
+{{ if currentPage == totalPage }}
+
+  <li><a href="javascript:loadData( 1 ) ">下一页</a></li>
+
+{{ else  }}
+
+  <li><a href="javascript:loadData( {{ currentPage + 1 }} )">下一页</a></li>
+
+{{ /if }}
+
+
+
+</script>
+
+
+<script>
+
+  //准备一个全局变量记录当前页
+  var currentPage;
+  //准备一个全局变量记录总页数
+  var totalPage;
+
+  //页面一打开先查第一页的数据
+  loadData(1);
+
+
+  /**
+  *  加载分页数据和生成页码的函数
+  */
+  function loadData(page) {
+
+    //记录当前页
+    currentPage = page;
+
+    //发请求，请求第一页的所有评论数据
+    $.get({
+
+      url: "api/getComments.php",
+      data: { pageIndex: page, pageSize: 10 },
+      dataType: "json",
+      success: function (obj) {
+
+        //记录总页数
+        totalPage = obj.totalPage;
+
+        //调用模板
+        var html = template('tplComments', { list: obj.data });
+        $('tbody').html(html);
+
+
+        //obj里多一个totalPage总页数，来生成页码就行了
+        var html2 = template('tplPage', { totalPage: obj.totalPage,currentPage: page});
+        $('.pagination').html(html2);
+      }
+
+    });
+  };
+
+
+  //全选的点击事件
+  $('thead :checkbox').click(function(){
+
+      //拿到全选的选中状态
+      var res = this.checked;
+
+      //把全选的状态给tbody里的所有checkbox      
+      $('tbody :checkbox').prop('checked',res);
+      
+
+      //如果是选中状态，那么就显示
+      if(res){
+        $('.btn-batch').fadeIn();
+      }else{
+        //如果是全不选，那么就隐藏
+        $('.btn-batch').fadeOut();
+      }
+
+  });
+
+
+  //tbody中的checkbox点击事件
+  function doCheck(){
+
+    //判断是否有全部选中
+    if( $('tbody :checked').length  == $('tbody :checkbox').length ){
+
+      //就让全选勾上
+      $('thead :checkbox').prop('checked',true);
+
+    }else{
+
+      //就让全选不勾
+      $('thead :checkbox').prop('checked',false);
+    }
+
+    //下面这两句话等同于上面那一坨话
+    // var res =  $('tbody :checked').length  == $('tbody :checkbox').length;
+    // $('thead :checkbox').prop('checked',res);
+
+
+
+    //只要有一个选中就要让批量操作显示出来
+    if($('tbody :checked').length > 0){
+
+      $('.btn-batch').fadeIn();
+
+    }else{
+      $('.btn-batch').fadeOut();
+    }
+    
+  };
+
+
+
+  function doEdit(id,st){
+
+    //发请求，去请求接口
+    $.post({
+
+        url:"api/updateComments.php",
+        data:{ ids: id , status: st },
+        success:function(obj){
+
+            if(obj == 'ok'){
+
+              //成功
+              loadData(currentPage);
+
+            }else{
+
+              alert('操作失败！请重启电脑！');
+            }
+        }
+    });
+  };
+
+
+  //注释的这一段只是为了演示在这个情况下行内式更方便
+  // $('.btn-batch button').click(function(){
+
+  //     if( this.innerHTML == "批量批准" ){
+
+  //       //给字段approved
+  //     }else if(this.innerHTML == "批量拒绝"){
+
+  //       //给rejected
+  //     }else{
+
+  //       //给trashed
+  //     }
+  // })
+
+
+    //批量操作调用的点击事件
+    function doBatch(st){
+
+      //记得给变量一个空字符串值，不然它的值是undefined，后面用+=有问题
+      var str = "";
+      
+      //拿id列表
+      //each给找到的内部每个元素做遍历，会调用这个函数
+      //并且把每次遍历到的下标和元素当做形参1，形参2传递过来了
+      $('tbody :checked').each(function(index,ele){
+
+          str += ele.value + ",";
+        
+      })
+
+ 
+      
+      //参数1：从下标几开始截取
+      //参数2：截取多少个长度
+      str = str.substr(0,str.length - 1);
+      
+
+
+      $.post({
+        url:"api/updateComments.php",
+        data:{ ids: str , status:st },
+        success:function(obj){
+
+          if(obj == 'ok'){
+            
+
+            //如果当前已经是最后一页并且是删除状态，那么就不能再刷新这一页，那么应该刷新上一页
+            //因为删除的话，这一页都没了，所以应该找上一页
+            if( currentPage == totalPage && st == 'trashed' && $('thead :checked').length > 0 ){
+
+                loadData(currentPage - 1);
+
+            }else{
+
+                loadData(currentPage);
+            }
+
+            //去掉全选的勾选状态
+            $('thead :checkbox').prop('checked',false);
+
+            
+          }else{
+
+            alert('操作失败，请重启电脑！');
+          }
+        }
+      });
+    }
+
+ 
+
+</script>

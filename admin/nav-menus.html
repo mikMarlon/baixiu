@@ -1,6 +1,31 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <!-- 最好页面一打开发请求，判断是否登录 -->
+    <script>
+
+        //发一个请求
+        var xhr = new XMLHttpRequest();
+    
+        xhr.open('get', 'api/checkLogin.php', false);
+    
+        //同步任务的话，记得先把事件监听的代码放在send前面
+        xhr.onload = function () {
+    
+          //不等于代表没有登录
+          if (xhr.responseText != "loginOK") {
+            //如果没有登录，打回登录页面
+            location = "login.html";
+            return;
+          }
+    
+        }
+    
+        //发送请求
+        xhr.send();
+    
+      </script>
+      
   <meta charset="utf-8">
   <title>Navigation menus &laquo; Admin</title>
   <link rel="stylesheet" href="../assets/vendors/bootstrap/css/bootstrap.css">
@@ -17,7 +42,7 @@
       <button class="btn btn-default navbar-btn fa fa-bars"></button>
       <ul class="nav navbar-nav navbar-right">
         <li><a href="profile.php"><i class="fa fa-user"></i>个人中心</a></li>
-        <li><a href="logout.php"><i class="fa fa-sign-out"></i>退出</a></li>
+        <li><a href="api/logout.php"><i class="fa fa-sign-out"></i>退出</a></li>
       </ul>
     </nav>
     <div class="container-fluid">

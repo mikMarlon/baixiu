@@ -1,19 +1,32 @@
+<!-- 
+
+  1.给登录加了一个id
+  2.给它加点击事件
+      2.1 阻止默认跳转
+      2.2 发请求 （三大步），在这之前要拿到email和password两个元素
+      2.3 在响应完成里判断响应体是否为ok，如果是跳转到index.html
+          如果不是就显示出错误的提示信息（给提示框加一个id方便我们找到它）
+
+-->
+
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="utf-8">
   <title>Sign in &laquo; Admin</title>
   <link rel="stylesheet" href="../assets/vendors/bootstrap/css/bootstrap.css">
   <link rel="stylesheet" href="../assets/css/admin.css">
 </head>
+
 <body>
   <div class="login">
     <form class="login-wrap">
       <img class="avatar" src="../assets/img/default.png">
       <!-- 有错误信息时展示 -->
-      <!-- <div class="alert alert-danger">
+      <div id="alert" class="alert alert-danger" style="display: none;">
         <strong>错误！</strong> 用户名或密码错误！
-      </div> -->
+      </div>
       <div class="form-group">
         <label for="email" class="sr-only">邮箱</label>
         <input id="email" type="email" class="form-control" placeholder="邮箱" autofocus>
@@ -22,8 +35,55 @@
         <label for="password" class="sr-only">密码</label>
         <input id="password" type="password" class="form-control" placeholder="密码">
       </div>
-      <a class="btn btn-primary btn-block" href="index.html">登 录</a>
+      <a id="login" class="btn btn-primary btn-block" href="index.html">登 录</a>
     </form>
   </div>
 </body>
+
 </html>
+
+
+<script>
+
+  
+
+  //找到邮箱
+  var email = document.getElementById('email');
+
+  //找到密码
+  var password = document.getElementById('password')
+
+  //给登录加点击事件
+  document.getElementById('login').onclick = function (e) {
+
+    e = e || window.event;
+    //阻止默认跳转
+    e.preventDefault();
+
+    //发请求
+    var xhr = new XMLHttpRequest();
+    //设置请求行
+    xhr.open('post', 'api/doLogin.php');
+    //设置请求头
+    xhr.setRequestHeader('Content-type', "application/x-www-form-urlencoded");
+    //发送请求&请求参数
+    xhr.send("email=" + email.value + "&password=" + password.value);
+
+    //监听响应完成
+    xhr.onload = function(){
+
+      if( xhr.responseText == "ok"){
+
+        //登录成功
+        location = "index.html";  //如果要用location对象跳转网页，直接location赋值就行了，等同于location.href=网址;
+
+      }else{
+
+        //登录失败 有兴趣可以导入jquery用淡入淡出
+        document.getElementById('alert').style.display = "block";
+      }
+    }
+
+  }
+
+</script>
